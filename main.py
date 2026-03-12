@@ -39,7 +39,7 @@ class ConsoleView(View):
             return
 
         for contact in contacts:
-            print(contact)
+            print(str(contact))
 
     def show_birthdays(self, birthdays):
         if not birthdays:
@@ -47,7 +47,7 @@ class ConsoleView(View):
             return
 
         for day in birthdays:
-            print(day)
+            print(f"{day}")
 
     def show_help(self):
         print("""
@@ -61,6 +61,7 @@ all
 add-birthday NAME DD.MM.YYYY
 show-birthday NAME
 birthdays
+help
 exit
 """)
 
@@ -68,6 +69,7 @@ exit
 
 
 class Field:
+
     def __init__(self, value):
         self.value = value
 
@@ -92,10 +94,12 @@ class Phone(Field):
     @value.setter
     def value(self, value):
 
+        value = value.strip()
+
         if len(value) == 10 and value.isdigit():
             self.__value = value
         else:
-            raise ValueError("Invalid phone format")
+            raise ValueError("Phone must contain exactly 10 digits.")
 
 
 class Birthday(Field):
@@ -170,7 +174,6 @@ class AddressBook(UserDict):
     def get_upcoming_birthdays(self, days=7):
 
         today = datetime.today().date()
-
         upcoming = []
 
         for user in self.data.values():
@@ -196,7 +199,6 @@ class AddressBook(UserDict):
 
 
 
-
 def input_error(func):
 
     def inner(*args, **kwargs):
@@ -216,6 +218,8 @@ def input_error(func):
     return inner
 
 
+
+
 @input_error
 def add_contact(args, book):
 
@@ -226,13 +230,10 @@ def add_contact(args, book):
     if record is None:
 
         record = Record(name)
-
         book.add_record(record)
-
         message = "Contact added."
 
     else:
-
         message = "Contact updated."
 
     record.add_phone(phone)
@@ -250,12 +251,9 @@ def change_contact(args, book):
     if record:
 
         record.edit_phone(old, new)
-
         return "Phone updated."
 
-    else:
-
-        raise KeyError
+    raise KeyError
 
 
 @input_error
@@ -273,7 +271,6 @@ def show_phone(args, book):
 
 
 def show_all(book):
-
     return list(book.data.values())
 
 
@@ -287,7 +284,6 @@ def add_birthday(args, book):
     if record:
 
         record.add_birthday(birthday)
-
         return "Birthday added."
 
     raise KeyError
@@ -311,9 +307,15 @@ def show_birthday(args, book):
 
 def parse_input(user_input):
 
-    cmd, *args = user_input.split()
+    parts = user_input.split()
 
-    return cmd.lower(), args
+    if not parts:
+        return "", []
+
+    cmd = parts[0].lower()
+    args = parts[1:]
+
+    return cmd, args
 
 
 def load_data():
@@ -337,7 +339,6 @@ def save_data(book):
 def main():
 
     book = load_data()
-
     view = ConsoleView()
 
     view.show_message("Welcome to the assistant bot!")
@@ -351,9 +352,7 @@ def main():
         if command in ["close", "exit"]:
 
             save_data(book)
-
             view.show_message("Good bye!")
-
             break
 
         elif command == "hello":
